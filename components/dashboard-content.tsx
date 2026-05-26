@@ -271,7 +271,7 @@ export function DashboardContent() {
           Your Environmental Impact
         </h2>
         <p className="text-primary-foreground/90 mb-4">
-          By correctly sorting {stats.totalScans} items, you've helped reduce
+          By correctly sorting {stats.totalScans} items, you&apos;ve helped reduce
           contamination and improve recycling efficiency.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

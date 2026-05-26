@@ -10,6 +10,24 @@ import Image from "next/image";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+interface ApiDetection {
+  class: string;
+  confidence: number;
+}
+
+interface ClassifyResult {
+  category: string;
+  confidence: number;
+  color: string;
+}
+
+interface ClassificationState {
+  primaryCategory: string;
+  confidence: number;
+  allResults: ClassifyResult[];
+  disposalTip: string;
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   plastic: "text-chart-1",
   metal: "text-chart-2",
@@ -43,7 +61,7 @@ export function ClassifyInterface() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ClassificationState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,13 +103,13 @@ export function ClassifyInterface() {
         return;
       }
 
-      const allResults = data.detections.map((det: any) => ({
+      const allResults = data.detections.map((det: ApiDetection) => ({
         category: det.class,
         confidence: det.confidence,
         color: CATEGORY_COLORS[det.class.toLowerCase()] ?? "text-chart-1",
       }));
 
-      const primary = allResults.reduce((best: any, cur: any) =>
+      const primary = allResults.reduce((best: ClassifyResult, cur: ClassifyResult) =>
         cur.confidence > best.confidence ? cur : best
       );
 
@@ -101,8 +119,8 @@ export function ClassifyInterface() {
         allResults,
         disposalTip: getDisposalTip(primary.category),
       });
-    } catch (err: any) {
-      setError(err.message || "Failed to classify. Check that the backend is running.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to classify. Check that the backend is running.");
     } finally {
       setIsLoading(false);
     }

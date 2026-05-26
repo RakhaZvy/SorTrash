@@ -22,7 +22,6 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: development
     steps:
       - uses: actions/checkout@v4
 
@@ -49,7 +48,6 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: development
     steps:
       - name: Trigger Render deploy
         run: |

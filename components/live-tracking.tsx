@@ -34,6 +34,7 @@ export function LiveTracking() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
+  const loopRef = useRef<FrameRequestCallback | null>(null);
   const lastFrameAt = useRef<number>(0);
   const isRunningRef = useRef(false);
 
@@ -104,10 +105,16 @@ export function LiveTracking() {
         lastFrameAt.current = timestamp;
         sendFrame();
       }
-      rafRef.current = requestAnimationFrame(loop);
+      if (loopRef.current) {
+        rafRef.current = requestAnimationFrame(loopRef.current);
+      }
     },
     [sendFrame]
   );
+
+  useEffect(() => {
+    loopRef.current = loop;
+  }, [loop]);
 
   const start = useCallback(async () => {
     setError(null);

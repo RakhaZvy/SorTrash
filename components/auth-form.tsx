@@ -79,7 +79,7 @@ export function AuthForm() {
 
       <div className="mt-6 p-4 bg-secondary/50 rounded-lg">
         <p className="text-sm text-muted-foreground text-center">
-          You can also use the app without signing in, but your history won't be
+          You can also use the app without signing in, but your history won&apos;t be
           saved.
         </p>
       </div>
