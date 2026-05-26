@@ -22,9 +22,7 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      packages: write
+    environment: development
     steps:
       - uses: actions/checkout@v4
 
@@ -32,17 +30,16 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/rakhaZvy/sortrash-frontend:latest
-            ghcr.io/rakhaZvy/sortrash-frontend:${{ github.sha }}
+            ${{ secrets.DOCKER_HUB_USER }}/sortrash-frontend:latest
+            ${{ secrets.DOCKER_HUB_USER }}/sortrash-frontend:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:5000' }}
           cache-from: type=gha
@@ -52,6 +49,7 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: development
     steps:
       - name: Trigger Render deploy
         run: |
