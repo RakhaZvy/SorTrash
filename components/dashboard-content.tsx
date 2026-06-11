@@ -5,6 +5,48 @@ import { Button } from "@/components/ui/button";
 import { BarChart3, TrendingUp, Calendar, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
+// 1. Strict Typing untuk Presentasi
+type CategoryDisplay = { label: string; color: string; icon: string };
+
+// 2. Mapper Terpusat (Single Source of Truth)
+// Tailwind classes dimasukkan ke color, ikon disesuaikan, label dibersihkan
+const CATEGORY_MAP: Record<string, CategoryDisplay> = {
+  "Papel_y_carton": { label: "Paper & Cardboard", color: "bg-chart-3", icon: "📄" },
+  "Paper": { label: "Paper", color: "bg-chart-3", icon: "📄" },
+  "paper & cardboard": { label: "Paper & Cardboard", color: "bg-chart-3", icon: "📄" },
+  "Plastic": { label: "Plastic", color: "bg-chart-1", icon: "♻️" },
+  "Plastico": { label: "Plastic", color: "bg-chart-1", icon: "♻️" },
+  "plastic": { label: "Plastic", color: "bg-chart-1", icon: "♻️" },
+  "Organic": { label: "Organic", color: "bg-green-500", icon: "🌿" },
+  "Organico": { label: "Organic", color: "bg-green-500", icon: "🌿" },
+  "organic": { label: "Organic", color: "bg-green-500", icon: "🌿" },
+  "Metal": { label: "Metal", color: "bg-chart-2", icon: "🔩" },
+  "metal": { label: "Metal", color: "bg-chart-2", icon: "🔩" },
+  "Glass": { label: "Glass", color: "bg-chart-4", icon: "🫙" },
+  "glass": { label: "Glass", color: "bg-chart-4", icon: "🫙" },
+  "Trash": { label: "Trash", color: "bg-red-500", icon: "🗑️" },
+  "trash": { label: "Trash", color: "bg-red-500", icon: "🗑️" },
+  "Cardboard": { label: "Cardboard", color: "bg-chart-5", icon: "📦" },
+  "cardboard": { label: "Cardboard", color: "bg-chart-5", icon: "📦" },
+  "battery": { label: "Battery", color: "bg-yellow-500", icon: "🔋" },
+};
+
+// 3. Helper Function dengan fallback yang aman
+function getCategoryDisplay(rawClass: string, index: number = 0): CategoryDisplay {
+  if (CATEGORY_MAP[rawClass]) return CATEGORY_MAP[rawClass];
+  
+  const lowerMatch = CATEGORY_MAP[rawClass.toLowerCase()];
+  if (lowerMatch) return lowerMatch;
+
+  const cleanLabel = rawClass
+    .split('_')
+    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+    
+  // Jika tidak dikenali, gunakan warna chart default secara berurutan
+  return { label: cleanLabel, color: `bg-chart-${(index % 4) + 1}`, icon: "🗑️" }; 
+}
+
 interface ClassificationEntry {
   id: number;
   category: string;
@@ -34,15 +76,14 @@ export function DashboardContent() {
     categoryDistribution: [],
     recentClassifications: [],
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
       setError(null);
-      const API_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
       const response = await fetch(`${API_URL}/stats`);
 
       if (!response.ok) {
@@ -61,35 +102,9 @@ export function DashboardContent() {
 
   useEffect(() => {
     fetchStats();
-
-    // Auto-refresh every 30 seconds
     const interval = setInterval(fetchStats, 30000);
-
     return () => clearInterval(interval);
   }, []);
-
-  const getCategoryIcon = (category: string) => {
-    "Papel_y_carton": { label: "Paper & Cardboard", icon: "📄" },
-    "Paper": { label: "Paper", icon: "📄" },
-    "Plastic": { label: "Plastic", icon: "♻️" },
-    "Plastico": { label: "Plastic", icon: "♻️" },
-    "Organic": { label: "Organic", icon: "🌿" },
-    "Organico": { label: "Organic", icon: "🌿" },
-    "Metal": { label: "Metal", icon: "🔩" },
-  };
-
-  const getCategoryColor = (category: string, index: number) => {
-    const colors: Record<string, string> = {
-      plastic: "bg-chart-1",
-      metal: "bg-chart-2",
-      paper: "bg-chart-3",
-      glass: "bg-chart-4",
-      cardboard: "bg-chart-5",
-      organic: "bg-green-500",
-      battery: "bg-yellow-500",
-    };
-    return colors[category.toLowerCase()] || `bg-chart-${(index % 4) + 1}`;
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -113,6 +128,11 @@ export function DashboardContent() {
       </div>
     );
   }
+
+  // Format the "Most Common" string using our mapper to ensure it looks clean
+  const mostCommonDisplay = stats.mostCommon !== "N/A" 
+    ? getCategoryDisplay(stats.mostCommon).label 
+    : "N/A";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -172,7 +192,7 @@ export function DashboardContent() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Most Common</p>
-              <p className="text-3xl font-bold">{stats.mostCommon}</p>
+              <p className="text-3xl font-bold">{mostCommonDisplay}</p>
             </div>
             <div className="w-12 h-12 bg-chart-2/10 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-chart-2" />
@@ -187,32 +207,32 @@ export function DashboardContent() {
           <h2 className="text-xl font-semibold mb-6">Category Distribution</h2>
           {stats.categoryDistribution.length > 0 ? (
             <div className="space-y-4">
-              {stats.categoryDistribution.map((item, index) => (
-                <div key={item.category}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">
-                        {getCategoryIcon(item.category)}
+              {stats.categoryDistribution.map((item, index) => {
+                const display = getCategoryDisplay(item.category, index);
+                return (
+                  <div key={item.category}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">
+                          {display.icon}
+                        </span>
+                        <span className="font-medium">{display.label}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {item.count} items
                       </span>
-                      <span className="font-medium">{item.category}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {item.count} items
-                    </span>
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${display.color}`}
+                        style={{
+                          width: `${(item.count / stats.totalScans) * 100}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${getCategoryColor(
-                        item.category,
-                        index
-                      )}`}
-                      style={{
-                        width: `${(item.count / stats.totalScans) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
@@ -226,19 +246,20 @@ export function DashboardContent() {
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-6">Recent Classifications</h2>
           {stats.recentClassifications.length > 0 ? (
-            <>
-              <div className="space-y-3">
-                {stats.recentClassifications.map((item) => (
+            <div className="space-y-3">
+              {stats.recentClassifications.map((item, index) => {
+                const display = getCategoryDisplay(item.category, index);
+                return (
                   <div
                     key={item.id}
                     className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">
-                        {getCategoryIcon(item.category)}
+                        {display.icon}
                       </span>
                       <div>
-                        <p className="font-medium">{item.category}</p>
+                        <p className="font-medium">{display.label}</p>
                         <p className="text-sm text-muted-foreground">
                           {formatDate(item.date)}
                         </p>
@@ -248,9 +269,9 @@ export function DashboardContent() {
                       {(item.confidence * 100).toFixed(0)}%
                     </span>
                   </div>
-                ))}
-              </div>
-            </>
+                );
+              })}
+            </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <p>No recent classifications.</p>
