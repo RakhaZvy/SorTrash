@@ -18,19 +18,39 @@ interface ClassificationResultProps {
   onReset: () => void;
 }
 
+// 1. Buat Mapper Terpusat
+// Petakan raw string dari backend ke Label UI yang rapi dan ikonnya
+const categoryMapper: Record<string, { label: string; icon: string }> = {
+  "Papel_y_carton": { label: "Paper & Cardboard", icon: "📄" },
+  "Paper": { label: "Paper", icon: "📄" },
+  "Plastic": { label: "Plastic", icon: "♻️" },
+  "Plastico": { label: "Plastic", icon: "♻️" },
+  "Organic": { label: "Organic", icon: "🌿" },
+  "Organico": { label: "Organic", icon: "🌿" },
+  "Metal": { label: "Metal", icon: "🔩" },
+};
+
+// 2. Fungsi helper untuk memproses kategori mentah
+const getCategoryDisplay = (rawCategory: string) => {
+  if (categoryMapper[rawCategory]) {
+    return categoryMapper[rawCategory];
+  }
+  // Fallback rasional jika backend mengirim kategori tak terduga:
+  // Hilangkan underscore dan jadikan Title Case, beri ikon default
+  const cleanLabel = rawCategory
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+    
+  return { label: cleanLabel, icon: "🗑️" };
+};
+
 export function ClassificationResult({
   result,
   onReset,
 }: ClassificationResultProps) {
-  const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-      Plastic: "♻️",
-      Organic: "🌿",
-      Paper: "📄",
-      Metal: "🔩",
-    };
-    return icons[category] || "🗑️";
-  };
+  // Ambil data presentasi untuk primary category
+  const primaryDisplay = getCategoryDisplay(result.primaryCategory);
 
   return (
     <Card className="p-8">
@@ -41,10 +61,10 @@ export function ClassificationResult({
           <h2 className="text-2xl font-bold mb-2">Classification Complete</h2>
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
             <span className="text-3xl">
-              {getCategoryIcon(result.primaryCategory)}
+              {primaryDisplay.icon}
             </span>
             <span className="text-xl font-semibold">
-              {result.primaryCategory}
+              {primaryDisplay.label}
             </span>
           </div>
           <p className="text-muted-foreground mt-2">
@@ -56,30 +76,33 @@ export function ClassificationResult({
         <div>
           <h3 className="font-semibold mb-3">All Classifications</h3>
           <div className="space-y-2">
-            {result.allResults.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">
-                    {getCategoryIcon(item.category)}
-                  </span>
-                  <span className="font-medium">{item.category}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${item.color.replace("text-", "bg-")}`}
-                      style={{ width: `${item.confidence * 100}%` }}
-                    />
+            {result.allResults.map((item, index) => {
+              const itemDisplay = getCategoryDisplay(item.category);
+              return (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">
+                      {itemDisplay.icon}
+                    </span>
+                    <span className="font-medium">{itemDisplay.label}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground w-12 text-right">
-                    {(item.confidence * 100).toFixed(0)}%
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${item.color.replace("text-", "bg-")}`}
+                        style={{ width: `${item.confidence * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-sm text-muted-foreground w-12 text-right">
+                      {(item.confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
