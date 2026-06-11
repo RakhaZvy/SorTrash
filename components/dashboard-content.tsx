@@ -69,16 +69,13 @@ export function DashboardContent() {
   }, []);
 
   const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-      plastic: "♻️",
-      organic: "🌿",
-      paper: "📄",
-      metal: "🔩",
-      glass: "🥃",
-      cardboard: "📦",
-      battery: "🔋",
-    };
-    return icons[category.toLowerCase()] || "🗑️";
+    "Papel_y_carton": { label: "Paper & Cardboard", icon: "📄" },
+    "Paper": { label: "Paper", icon: "📄" },
+    "Plastic": { label: "Plastic", icon: "♻️" },
+    "Plastico": { label: "Plastic", icon: "♻️" },
+    "Organic": { label: "Organic", icon: "🌿" },
+    "Organico": { label: "Organic", icon: "🌿" },
+    "Metal": { label: "Metal", icon: "🔩" },
   };
 
   const getCategoryColor = (category: string, index: number) => {
